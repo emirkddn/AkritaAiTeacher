@@ -1,4 +1,4 @@
-package com.example.huda_ai;
+package com.example.akrita_ai;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +8,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.huda_ai.R;
 
 import java.util.List;
 

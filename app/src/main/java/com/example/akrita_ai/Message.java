@@ -1,4 +1,4 @@
-package com.example.huda_ai;
+package com.example.akrita_ai;
 
 public class Message {
 

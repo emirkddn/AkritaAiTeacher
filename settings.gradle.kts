@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "huda-ai"
+rootProject.name = "akrita-ai"
 include(":app")
