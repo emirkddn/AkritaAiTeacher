@@ -11,3 +11,5 @@ Akrita, öğrencilere sunulan içeriklerin kalitesini artırmak için sürekli o
 ![WhatsApp Image 2024-11-03 at 21 58 07](https://github.com/user-attachments/assets/aedab4fc-1498-4e6b-92a6-799470213f74)
 
 Sonuç olarak, Akrita ile öğrencilerin eksik olduğu veya ileri düzey öğrenmek istedikleri konular için konu çalışması ve soru çözümü yapabilmeleri amaçlanmıştır. Aynı zamanda Akrita öğrencilerin geri dönüşleri ile hem kendi veri tabanını oluşturacak hem de sürekli güncellenen bilgi sistemi ile öğrenciler için en uygun anlatım biçimini ve soruları sunacaktır.
+
+https://www.youtube.com/watch?v=WZYBvBg0RVM
