@@ -1,91 +1,68 @@
 package com.example.huda_ai;
 
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Typeface;
-import android.net.Uri;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.Editable;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
+import android.text.Layout;
 import android.text.TextWatcher;
-import android.text.style.StyleSpan;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
+import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.itextpdf.text.DocumentException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
 import com.google.ai.client.generativeai.type.Content;
 import com.google.ai.client.generativeai.type.GenerateContentResponse;
-import com.google.common.net.MediaType;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.text.DocumentException;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.CDATASection;
-import org.w3c.dom.Comment;
-import org.w3c.dom.DOMConfiguration;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
-import org.w3c.dom.DocumentFragment;
-import org.w3c.dom.DocumentType;
-import org.w3c.dom.Element;
-import org.w3c.dom.EntityReference;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.ProcessingInstruction;
-import org.w3c.dom.Text;
-import org.w3c.dom.UserDataHandler;
-
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import okhttp3.OkHttpClient;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ChatHistoryAdapter.OnChatHistoryClickListener {
 
     String lastQuestion;
     ImageButton btnAction;
     ImageButton btnAgain;
-    ImageButton btnDownload;
     EditText editTextText;
     List<Message> messageList;
     RecyclerView rv;
     MessageAdapter messageAdapter;
     StringBuilder conversationHistory = new StringBuilder();
+    ConstraintLayout constraintLayout;
+    ConstraintLayout constraintLayoutTitle;
+
+    Layout myLinearLayout;
+
+    DrawerLayout drawerLayout;
+    ImageButton btnHist;
+
+    //RecyclerView recyclerView;
+    List<String> chatHistoryFiles;
+
 
     private static final int PERMISSION_REQUEST_CODE = 100;
 
@@ -97,6 +74,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+
+        drawerLayout = findViewById(R.id.drawer_layout);
+        //recyclerView = findViewById(R.id.recycler_view_chat_history);
+        //recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        chatHistoryFiles = getChatHistoryFiles();
+        ChatHistoryAdapter adapter = new ChatHistoryAdapter(chatHistoryFiles, this);
+        //recyclerView.setAdapter(adapter);
+
+        constraintLayout = findViewById(R.id.constraintLayout);
+        constraintLayoutTitle = findViewById(R.id.constraintLayout2);
+
+        //myLinearLayout = findViewById(R.id.left_chat_text_view);
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -110,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         editTextText = findViewById(R.id.editTextText);
         rv = findViewById(R.id.rv);
         btnAgain = findViewById(R.id.btnAgain);
+        btnHist = findViewById(R.id.btnHist);
 
         messageAdapter = new MessageAdapter(messageList);
         rv.setAdapter(messageAdapter);
@@ -119,6 +111,25 @@ public class MainActivity extends AppCompatActivity {
         firstquestion(getString(R.string.firstquestion));
 
         btnAgain.setVisibility(View.INVISIBLE);
+
+        /*
+        myLinearLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastClickTime < DOUBLE_CLICK_DELAY) {
+                        myLinearLayout.setBackgroundColor(Color.RED);
+                        lastClickTime = 0;
+                        return true;
+                    }
+                    lastClickTime = currentTime;
+                }
+                return false;
+            }
+        });
+       */
+
 
         btnAction.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -138,6 +149,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnHist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                    showUIComponents();
+                } else {
+                    drawerLayout.openDrawer(GravityCompat.START);
+                    hideUIComponents();
+                }
+            }
+        });
 
         /*
         btnDownload.setOnClickListener(new View.OnClickListener() {
@@ -157,8 +180,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         */
-
-
 
         editTextText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -183,8 +204,135 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    void hideUIComponents() {
+        editTextText.setVisibility(View.GONE);
+        btnAction.setVisibility(View.GONE);
+        btnAgain.setVisibility(View.GONE);
+        rv.setVisibility(View.GONE);
+        constraintLayout.setVisibility(View.GONE);
+        constraintLayoutTitle.setVisibility(View.GONE);
+    }
+
+    void showUIComponents() {
+        editTextText.setVisibility(View.VISIBLE);
+        btnAction.setVisibility(View.VISIBLE);
+        btnAgain.setVisibility(View.VISIBLE);
+        rv.setVisibility(View.VISIBLE);
+        constraintLayout.setVisibility(View.VISIBLE);
+        constraintLayoutTitle.setVisibility(View.VISIBLE);
+    }
 
 
+    public void loadChatHistoryToDrawerAgain() {
+        chatHistoryFiles = getChatHistoryFiles();
+        LinearLayout chatHistoryContainer = findViewById(R.id.chat_history_container);
+
+        chatHistoryContainer.removeAllViews();
+
+        for (String fileName : chatHistoryFiles) {
+            Button button = new Button(this);
+            button.setText(fileName);
+
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String chatData = loadChatData(fileName);
+                    Toast.makeText(MainActivity.this, "Sohbet Yüklendi:\n" + chatData, Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            chatHistoryContainer.addView(button);
+        }
+    }
+
+
+    public void loadChatHistoryToDrawer() {
+        DatabaseHelper db = new DatabaseHelper(this);
+        Cursor res = db.getAllChats();
+        List<String> chatHistory = new ArrayList<>();
+
+        Log.d("ChatHistory", "Kayıt Sayısı: " + res.getCount());
+
+        while (res.moveToNext()) {
+            chatHistory.add(res.getString(1)); // 1. sütun CHAT
+        }
+
+        ChatHistoryAdapter adapter = new ChatHistoryAdapter(chatHistory, this);
+        //recyclerView.setAdapter(adapter);
+    }
+
+
+    public void saveChatHistory(String chatData) {
+        DatabaseHelper db = new DatabaseHelper(this);
+        db.addChat(chatData);
+    }
+
+    public List<String> getChatHistoryFiles() {
+        List<String> chatHistoryFiles = new ArrayList<>();
+        File directory = new File(getFilesDir(), "chat_history");
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    chatHistoryFiles.add(file.getName());
+                }
+            }
+        }
+        return chatHistoryFiles;
+    }
+
+
+
+    public void onChatHistoryClick(String fileName) {
+        String chatData = loadChatData(fileName);
+        Toast.makeText(this, "Sohbet Yüklendi:\n" + chatData, Toast.LENGTH_SHORT).show();
+    }
+
+
+    public String loadChatData(String fileName) {
+        StringBuilder chatData = new StringBuilder();
+        try {
+            FileInputStream fis = openFileInput(fileName);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                chatData.append(line).append("\n");
+            }
+            reader.close();
+            fis.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return chatData.toString();
+    }
+
+
+    public void closeChat() {
+        String chatData = conversationHistory.toString();
+        saveChatHistory(chatData);
+        addChatButton(chatData);
+        conversationHistory.setLength(0);
+    }
+
+
+    public void addChatButton(String chatData) {
+        LinearLayout chatHistoryContainer = findViewById(R.id.chat_history_container);
+
+        Button chatButton = new Button(this);
+        chatButton.setText("Sohbet: " + (chatHistoryContainer.getChildCount() + 1));
+        chatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MainActivity.this, "Sohbet Yüklendi:\n" + chatData, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        chatHistoryContainer.addView(chatButton);
     }
 
     void addToChat(String message, String sentBy) {
@@ -200,18 +348,14 @@ public class MainActivity extends AppCompatActivity {
         addToChat(response, Message.SENT_BY_BOT);
     }
 
-
-
-
-
     public void firstquestion(String firstquestion){
         conversationHistory.append(firstquestion).append("\n");
 
-        messageList.add(new Message("Yazıyor...", Message.SENT_BY_BOT));
+        messageList.add(new Message("AI yükleniyor...", Message.SENT_BY_BOT));
 
         String fullContext = conversationHistory.toString();
 
-        GenerativeModel gm = new GenerativeModel("gemini-1.5-flash", "AIzaSyCE0XJfXBIf4vFIFNlrbHzkeSkWBFZAiyk");
+        GenerativeModel gm = new GenerativeModel("gemini-1.5-flash", "API_KEY");
         GenerativeModelFutures model = GenerativeModelFutures.from(gm);
         Content content = new Content.Builder().addText(fullContext).build();
         ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
@@ -220,8 +364,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(GenerateContentResponse result) {
                 String resultText = result.getText();
-
-                // Append the response to the conversation history
                 conversationHistory.append(resultText).append("\n");
                 addResponse(resultText);
             }
@@ -255,7 +397,6 @@ public class MainActivity extends AppCompatActivity {
             public void onSuccess(GenerateContentResponse result) {
                 String resultText = result.getText();
 
-
                 /*
                 SpannableString spannableString = new SpannableString(resultText);
                 Pattern pattern = Pattern.compile("\\*\\*(.*?)\\*\\*");
@@ -269,7 +410,6 @@ public class MainActivity extends AppCompatActivity {
                 addResponse(spannableString);
                 */
 
-
                 // Append the response to the conversation history
                 conversationHistory.append(resultText).append("\n");
                 addResponse(resultText);
@@ -282,4 +422,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }, this.getMainExecutor());
     }
+
+
 }

@@ -7,6 +7,45 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Ana içerik -->
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Geçmiş Sohbetler" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Diğer UI bileşenleri -->
+            <!-- ... -->
+
+
+        </RelativeLayout>
+
+        <!-- Navigation Drawer -->
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/nav_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start">
+
+            <LinearLayout
+                android:id="@+id/chat_history_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+        </com.google.android.material.navigation.NavigationView>
+    </androidx.drawerlayout.widget.DrawerLayout>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout2"
         android:layout_width="0dp"
@@ -15,13 +54,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-
         <TextView
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-condensed"
-            android:text="HUDA Yapay Zeka"
+            android:text="AKRITA Yapay Zeka"
             android:textColor="@color/white"
             android:textSize="30dp"
             android:textStyle="bold"
@@ -59,7 +97,7 @@
             android:layout_width="357dp"
             android:layout_height="56dp"
             android:ems="10"
-            android:hint="Write a question"
+            android:hint="Bana soru sor."
             android:inputType="text"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -99,5 +137,14 @@
         app:layout_constraintVertical_bias="0.0">
 
     </androidx.recyclerview.widget.RecyclerView>
+
+    <ImageButton
+        android:id="@+id/btnHist"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:srcCompat="@drawable/baseline_history_36_white"
+        android:background="@drawable/btnhist"
+        />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
